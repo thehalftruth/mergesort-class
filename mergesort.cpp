@@ -60,7 +60,7 @@ bool merge_sort_worker::ready(void) const {
            chunk_path.empty() == false;
 }
 
-
+// set-methods
 void merge_sort_worker::set_infile(const boost_filesys::path path) {
     infile_path = path;
 }
@@ -144,7 +144,7 @@ void merge_sort_worker::set_delete_double_lines(bool ddl) {
     delete_double_lines = ddl;
 }
 
-// get
+// get-methods
 uint32_t merge_sort_worker::get_lines_before(void) const {
     return lines_before;
 }
