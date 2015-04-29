@@ -3,8 +3,8 @@ Class Name: merge_sort_worker
 Description: A class for sorting BIG files
 Author: Adrian Haider
 Create date: 21.01.2015
-Last changed: 28.04.2015
-Version: 0.1.0
+Last changed: 29.04.2015
+Version: 0.1.0.1
 License: GNU GPLv3 (https://www.gnu.org/licenses/gpl.txt)
 
 This program comes with ABSOLUTELY NO WARRANTY
@@ -157,7 +157,7 @@ uint32_t merge_sort_worker::get_deleted_lines(void) const {
     return lines_before - lines_after;
 }
 
-void merge_sort_worker::tidy_up(std::vector<std::string>& string_vector) const
+inline void merge_sort_worker::tidy_up(std::vector<std::string>& string_vector) const
 {
     /* remove double strings from vector */
 
@@ -213,7 +213,7 @@ std::string merge_sort_worker::file_get_line(boost_filesys::path path,
     return line;
 }
 
-bool merge_sort_worker::compare_lines(std::string & string1, std::string & string2) const
+inline bool merge_sort_worker::compare_lines(std::string & string1, std::string & string2) const
 {
     switch (sort_mode) {
     case (ASC) :
