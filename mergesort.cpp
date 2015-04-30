@@ -456,7 +456,7 @@ void merge_sort_worker::start_worker(void)
 }
 
 void merge_sort_worker::operator() () {
-    this->start_worker();
+    start_worker();
 }
 
 #endif MERGESORT_CPP
