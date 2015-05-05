@@ -3,8 +3,8 @@ Class Name: merge_sort_worker
 Description: A class for sorting BIG files
 Author: Adrian Haider
 Create date: 21.01.2015
-Last changed: 29.04.2015
-Version: 0.1.0.1
+Last changed: 05.05.2015
+Version: 0.1.1.0
 License: GNU GPLv3 (https://www.gnu.org/licenses/gpl.txt)
 
 This program comes with ABSOLUTELY NO WARRANTY
@@ -87,7 +87,7 @@ private:
     inline void tidy_up(std::vector<std::string>&) const;
     inline std::string file_get_line(const boost_filesys::path path,
                                 uint64_t pos, uint64_t & next_pos) const;
-    inline bool compare_lines(std::string &, std::string &) const;
+    inline short compare_lines(std::string &, std::string &) const;
 
     void init_variables(void);
     void file_to_chunks(void);

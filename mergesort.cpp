@@ -3,8 +3,8 @@ Class Name: merge_sort_worker
 Description: A class for sorting BIG files
 Author: Adrian Haider
 Create date: 21.01.2015
-Last changed: 29.04.2015
-Version: 0.1.0.1
+Last changed: 05.05.2015
+Version: 0.1.1.0
 License: GNU GPLv3 (https://www.gnu.org/licenses/gpl.txt)
 
 This program comes with ABSOLUTELY NO WARRANTY
@@ -213,18 +213,18 @@ std::string merge_sort_worker::file_get_line(boost_filesys::path path,
     return line;
 }
 
-inline bool merge_sort_worker::compare_lines(std::string & string1, std::string & string2) const
+inline short merge_sort_worker::compare_lines(std::string & string1, std::string & string2) const
 {
     switch (sort_mode) {
     case (ASC) :
-        return (string1.compare(string2) >= 0);
+        return (string1.compare(string2) > 0);
         // no break required because return exits function
     case(DESC) :
-        return (string1.compare(string2) <= 0);
+        return (string1.compare(string2) < 0);
         // no break required because return exits function
     }
 
-    return false; // just for prevent warnings
+    return -1; // strings are equal
 }
 
 void merge_sort_worker::init_variables(void) {
@@ -353,10 +353,12 @@ void merge_sort_worker::file_to_chunks(void)
 void merge_sort_worker::start_merge_sort(void)
 {
     std::ofstream outfile;
-    std::string next_line, line;
+    std::string last_line, next_line, line;
     uint64_t tmp_next_line_pos;
     uint64_t next_line_pos;
     path_seek next_line_path_seek;
+
+    last_line = "";
 
     /* binary to prevent converting \n to \r\n (or \r\n to \r\r\n) */
     outfile.open(outfile_path.string(), std::ios_base::binary);
@@ -365,45 +367,61 @@ void merge_sort_worker::start_merge_sort(void)
         while (! chunk_filenames.empty())
         {
             //get next line
-            std::list<path_seek>::iterator filenames_iter = chunk_filenames.begin();
-            std::list<path_seek>::iterator filenames_end_iter = chunk_filenames.end();
+            std::list<path_seek>::iterator filename_iter = chunk_filenames.begin();
+            std::list<path_seek>::iterator filename_end_iter = chunk_filenames.end();
             std::list<path_seek>::iterator next_line_iter;
         
             // first line is next_line on start of the loop
-            next_line = file_get_line((*filenames_iter).path,
-                (*filenames_iter).pos, tmp_next_line_pos);
+            next_line = file_get_line((*filename_iter).path,
+                (*filename_iter).pos, tmp_next_line_pos);
 
-            next_line_path_seek = (*filenames_iter);
-            next_line_iter = filenames_iter;
+            next_line_path_seek = (*filename_iter);
+            next_line_iter = filename_iter;
             next_line_pos = tmp_next_line_pos;
 
-            if (filenames_iter != filenames_end_iter) {
-                ++filenames_iter;
+            if (filename_iter != filename_end_iter) {
+                ++filename_iter;
             } else {
                 // TODO: error description
                 throw std::logic_error("");
                 break;
             }
 
-            for (; filenames_iter != filenames_end_iter; ++filenames_iter)
-            {
-                line = file_get_line((*filenames_iter).path,
-                    (*filenames_iter).pos, tmp_next_line_pos);
+            int compare_result = 0;
 
-                if ( compare_lines(next_line, line) )
-                {
+            for (; filename_iter != filename_end_iter; ++filename_iter)
+            {
+                line = file_get_line(filename_iter->path,
+                    filename_iter->pos, tmp_next_line_pos);
+
+                // compare lines
+                
+                compare_result = compare_lines(next_line, line);
+                
+                if ( compare_result == 1
+                     || (delete_double_lines == false && compare_result == -1) )
+                {    // next line found or don't delete double lines
                     next_line = line;
-                    next_line_path_seek = (*filenames_iter);
-                    next_line_iter = filenames_iter;
+                    next_line_path_seek = (*filename_iter);
+                    next_line_iter = filename_iter;
                     next_line_pos = tmp_next_line_pos;
+                }
+                else if (compare_result == -1)
+                {   // lines are equal and delete double lines
+                    filename_iter->pos = tmp_next_line_pos;   // skip line by set read position
                 }
             }
 
-            outfile << next_line << newline;
+            if (delete_double_lines == false || next_line != last_line)
+            {
+                // TODO: write to buffer
+                outfile << next_line << newline;
+                last_line = next_line;
+                ++lines_after; // count lines for statistics
+            }
+
             next_line_iter->pos = next_line_pos;   // set file read position
             next_line_path_seek.pos = next_line_pos;
-
-            ++lines_after; // count lines for statistics
 
             // delete empty chunk files
 
@@ -413,12 +431,12 @@ void merge_sort_worker::start_merge_sort(void)
 
                 // delete iterator
 
-                filenames_iter = chunk_filenames.begin();
-                filenames_end_iter = chunk_filenames.end();
+                filename_iter = chunk_filenames.begin();
+                filename_end_iter = chunk_filenames.end();
 
-                for (; filenames_iter != filenames_end_iter; ++filenames_iter) {
-                    if (filenames_iter->path == next_line_path_seek.path) {
-                        chunk_filenames.erase(filenames_iter);
+                for (; filename_iter != filename_end_iter; ++filename_iter) {
+                    if (filename_iter->path == next_line_path_seek.path) {
+                        chunk_filenames.erase(filename_iter);
                         break;
                     }
                 }
@@ -456,7 +474,7 @@ void merge_sort_worker::start_worker(void)
 }
 
 void merge_sort_worker::operator() () {
-    this->start_worker();
+    start_worker();
 }
 
 #endif MERGESORT_CPP
